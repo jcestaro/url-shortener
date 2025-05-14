@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: meu-mongo-db-compose
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata_compose:/data/db
+        # environment: # Descomente e configure se precisar de autenticação
+        #   MONGO_INITDB_ROOT_USERNAME: admin
+        #   MONGO_INITDB_ROOT_PASSWORD: suaSenhaSuperSecreta
+
+        # Opcional: Sua aplicação Spring Boot também pode ser definida aqui
+        # app:
+        #   build: . # Assume que há um Dockerfile para sua app Spring Boot
+        #   ports:
+        #     - "8080:8080"
+        #   depends_on:
+        #     - mongodb
+        #   environment:
+        #     SPRING_DATA_MONGODB_URI: mongodb://admin:suaSenhaSuperSecreta@mongodb:27017/seuBanco?authSource=admin
+      # Note que aqui usamos 'mongodb' como hostname, que é o nome do serviço definido no Docker Compose
+
+volumes:
+  mongodata_compose: # Define o volume para persistência
