@@ -3,7 +3,7 @@ version: '3.8'
 services:
   mongodb:
     image: mongo:latest
-    container_name: meu-mongo-db-compose
+    container_name: my-mongo-db-compose
     ports:
       - "27017:27017"
     environment:
