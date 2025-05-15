@@ -1,0 +1,12 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/url_shortener_test
+  main:
+    allow-bean-definition-overriding: true
+  jackson:
+    serialization:
+      indent_output: true
+  test:
+    database:
+      replace: none
