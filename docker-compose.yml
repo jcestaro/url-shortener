@@ -12,16 +12,5 @@ services:
     volumes:
       - mongodata_compose:/data/db
 
-  app:
-    build: .
-    container_name: springboot-url-shortener
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mongodb
-    environment:
-      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/url_shortener_db?authSource=admin
-      SPRING_APPLICATION_NAME: url-shortener
-
 volumes:
   mongodata_compose:
