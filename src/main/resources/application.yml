@@ -1,0 +1,13 @@
+spring:
+  docker:
+    compose:
+      enabled: true
+      file: ./docker-compose.yml
+  data:
+    mongodb:
+      host: mongodb
+      port: 27017
+      database: url_shortener_db
+      username: admin
+      password: admin
+      authentication-database: admin

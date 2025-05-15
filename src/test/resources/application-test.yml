@@ -1,7 +1,7 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/url_shortener_test
+      uri: mongodb://localhost:27017/test
   main:
     allow-bean-definition-overriding: true
   jackson:

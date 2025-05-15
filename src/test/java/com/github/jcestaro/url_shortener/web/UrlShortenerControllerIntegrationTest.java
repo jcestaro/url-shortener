@@ -1,5 +1,6 @@
 package com.github.jcestaro.url_shortener.web;
 
+import com.github.jcestaro.url_shortener.base.IntegrationTestBase;
 import com.github.jcestaro.url_shortener.infra.UrlMappingRepository;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class UrlShortenerControllerIntegrationTest {
+class UrlShortenerControllerIntegrationTest extends IntegrationTestBase {
 
     private static final String URL_SPRING = "https://spring.io/";
     private static final String URL_GOOGLE = "https://www.google.com/";
