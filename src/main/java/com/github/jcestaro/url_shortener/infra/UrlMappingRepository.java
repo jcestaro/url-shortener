@@ -10,6 +10,6 @@ import java.util.UUID;
 @Repository
 public interface UrlMappingRepository extends MongoRepository<UrlMapping, UUID> {
 
-    Optional<UrlMapping> findByOriginalUrl(String originalUrl);
+    Optional<UrlMapping> findByShortCode(String shortCode);
 
 }

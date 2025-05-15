@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Random;
 
 import static org.apache.catalina.manager.Constants.CHARSET;
@@ -21,6 +22,11 @@ public class UrlMappingService {
     @Autowired
     public UrlMappingService(UrlMappingRepository repository) {
         this.repository = repository;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<UrlMapping> findByShortCode(String shortCode) {
+        return repository.findByShortCode(shortCode);
     }
 
     @Transactional(rollbackFor = Exception.class)
