@@ -2,6 +2,7 @@ package com.github.jcestaro.url_shortener.web;
 
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import com.github.jcestaro.url_shortener.service.UrlMappingService;
+import com.github.jcestaro.url_shortener.service.producer.ProducerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,10 +20,12 @@ public class UrlShortenerController {
     public static final String API_URL_SHORTENER = "/api/url-shortener";
 
     private final UrlMappingService service;
+    private final ProducerService producerService;
 
     @Autowired
-    public UrlShortenerController(UrlMappingService service) {
+    public UrlShortenerController(UrlMappingService service, ProducerService producerService) {
         this.service = service;
+        this.producerService = producerService;
     }
 
     @PostMapping
@@ -34,6 +37,9 @@ public class UrlShortenerController {
                 .replace(request.getRequestURI(), request.getContextPath());
 
         String shortUrl = baseUrl + API_URL_SHORTENER + "/" + urlMapping.getShortCode();
+
+        producerService.sendMessage(shortUrl);
+
         return ResponseEntity.ok(shortUrl);
     }
 
