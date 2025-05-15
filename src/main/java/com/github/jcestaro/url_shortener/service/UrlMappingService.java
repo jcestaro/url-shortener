@@ -29,7 +29,7 @@ public class UrlMappingService {
         return repository.findByShortCode(shortCode);
     }
 
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public UrlMapping createShortUrl(String originalUrl) {
         String shortCode = generateShortUrl();
         UrlMapping shortUrl = new UrlMapping(originalUrl, shortCode);

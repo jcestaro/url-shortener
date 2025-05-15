@@ -4,6 +4,7 @@ import com.github.jcestaro.url_shortener.model.UrlMapping;
 import com.github.jcestaro.url_shortener.service.UrlMappingService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +40,7 @@ public class UrlShortenerController {
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(@PathVariable String shortCode) {
         return service.findByShortCode(shortCode)
-                .<ResponseEntity<Void>>map(urlMapping -> ResponseEntity.status(302)
+                .<ResponseEntity<Void>>map(urlMapping -> ResponseEntity.status(HttpStatus.FOUND)
                         .location(URI.create(urlMapping.getOriginalUrl()))
                         .build())
                 .orElseGet(() -> ResponseEntity.notFound().build());
