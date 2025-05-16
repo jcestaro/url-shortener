@@ -21,6 +21,8 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
+    private static final String REPLY = "-reply";
+
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
@@ -33,17 +35,8 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
 
-    @Bean
-    public ProducerFactory<String, String> producerFactoryString() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        return new DefaultKafkaProducerFactory<>(props);
-    }
-
-    @Bean
-    public ProducerFactory<String, UrlMapping> producerFactoryUrlMapping() {
+    // -------------------- MÉTODOS GENÉRICOS --------------------
+    public <K, V> ProducerFactory<K, V> genericProducerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -51,37 +44,14 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(props);
     }
 
-    @Bean
-    public KafkaTemplate<String, String> kafkaTemplateString() {
-        return new KafkaTemplate<>(producerFactoryString());
-    }
-
-    @Bean
-    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplate(
-            ProducerFactory<String, String> pf,
-            ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainer
-    ) {
-        return new ReplyingKafkaTemplate<>(pf, repliesContainer);
-    }
-
-    @Bean
-    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainer(ConsumerFactory<String, UrlMapping> cf) {
-        ConcurrentKafkaListenerContainerFactory<String, UrlMapping> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(cf);
-        factory.getContainerProperties().setGroupId(groupId + "-reply");
-
-        ConcurrentMessageListenerContainer<String, UrlMapping> container = factory.createContainer(replyTopic);
-        container.setAutoStartup(false);
-        return container;
-    }
-
-    @Bean
-    public ConsumerFactory<String, UrlMapping> consumerFactoryUrlMapping() {
+    public <V> ConsumerFactory<String, V> genericConsumerFactory(Class<V> valueClass, String consumerGroupId) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId + "-reply-consumer");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
-        JsonDeserializer<UrlMapping> deserializer = new JsonDeserializer<>(UrlMapping.class);
+        JsonDeserializer<V> deserializer = new JsonDeserializer<>(valueClass);
         deserializer.setRemoveTypeHeaders(false);
         deserializer.addTrustedPackages("*");
         deserializer.setUseTypeMapperForKey(false);
@@ -89,31 +59,95 @@ public class KafkaConfig {
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
 
+    public <K, V> KafkaTemplate<K, V> genericKafkaTemplate(ProducerFactory<K, V> pf) {
+        return new KafkaTemplate<>(pf);
+    }
+
+    public <K, V> ConcurrentKafkaListenerContainerFactory<K, V> genericKafkaListenerFactory(
+            ConsumerFactory<K, V> cf,
+            KafkaTemplate<?, ?> replyTemplate
+    ) {
+        ConcurrentKafkaListenerContainerFactory<K, V> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(cf);
+        factory.setReplyTemplate(replyTemplate);
+        return factory;
+    }
+
+    public <K, R> ConcurrentMessageListenerContainer<K, R> genericRepliesContainer(
+            ConsumerFactory<K, R> cf,
+            String topic,
+            String replyGroupId
+    ) {
+        ConcurrentKafkaListenerContainerFactory<K, R> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(cf);
+        factory.getContainerProperties().setGroupId(replyGroupId);
+
+        ConcurrentMessageListenerContainer<K, R> container = factory.createContainer(topic);
+        container.setAutoStartup(false);
+        return container;
+    }
+
+    public <K, V, R> ReplyingKafkaTemplate<K, V, R> genericReplyingKafkaTemplate(
+            ProducerFactory<K, V> pf,
+            ConcurrentMessageListenerContainer<K, R> repliesContainer
+    ) {
+        return new ReplyingKafkaTemplate<>(pf, repliesContainer);
+    }
+
+    // -------------------- BEANS CONCRETOS --------------------
+    @Bean
+    public ProducerFactory<String, String> producerFactoryString() {
+        return genericProducerFactory();
+    }
+
+    @Bean
+    public ProducerFactory<String, UrlMapping> producerFactoryUrlMapping() {
+        return genericProducerFactory();
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplateString() {
+        return genericKafkaTemplate(producerFactoryString());
+    }
+
+    @Bean
+    public KafkaTemplate<String, UrlMapping> kafkaTemplateUrlMapping() {
+        return genericKafkaTemplate(producerFactoryUrlMapping());
+    }
+
     @Bean
     public ConsumerFactory<String, String> consumerFactoryString() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(props);
+        return genericConsumerFactory(String.class, groupId);
+    }
+
+    @Bean
+    public ConsumerFactory<String, UrlMapping> consumerFactoryUrlMapping() {
+        return genericConsumerFactory(UrlMapping.class, groupId + REPLY);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactoryString(
             ConsumerFactory<String, String> consumerFactoryString,
-            KafkaTemplate<String, UrlMapping> replyTemplateUrlMapping
+            KafkaTemplate<String, UrlMapping> kafkaTemplateUrlMapping
     ) {
-
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactoryString);
-        factory.setReplyTemplate(replyTemplateUrlMapping);
-        return factory;
+        return genericKafkaListenerFactory(consumerFactoryString, kafkaTemplateUrlMapping);
     }
 
     @Bean
-    public KafkaTemplate<String, UrlMapping> replyTemplateUrlMapping(ProducerFactory<String, UrlMapping> pf) {
-        return new KafkaTemplate<>(pf);
+    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainerUrlMapping() {
+        return genericRepliesContainer(
+                consumerFactoryUrlMapping(),
+                replyTopic,
+                groupId + REPLY
+        );
+    }
+
+    @Bean
+    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplateUrlMapping() {
+        return genericReplyingKafkaTemplate(
+                producerFactoryString(),
+                repliesContainerUrlMapping()
+        );
     }
 
 }
