@@ -2,7 +2,7 @@ package com.github.jcestaro.url_shortener.web;
 
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import com.github.jcestaro.url_shortener.service.UrlMappingService;
-import com.github.jcestaro.url_shortener.service.producer.ProducerService;
+import com.github.jcestaro.url_shortener.service.producer.ShortUrlProducerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,25 +20,23 @@ public class UrlShortenerController {
     public static final String API_URL_SHORTENER = "/api/url-shortener";
 
     private final UrlMappingService service;
-    private final ProducerService producerService;
+    private final ShortUrlProducerService shortUrlProducerService;
 
     @Autowired
-    public UrlShortenerController(UrlMappingService service, ProducerService producerService) {
+    public UrlShortenerController(UrlMappingService service, ShortUrlProducerService shortUrlProducerService) {
         this.service = service;
-        this.producerService = producerService;
+        this.shortUrlProducerService = shortUrlProducerService;
     }
 
     @PostMapping
-    public ResponseEntity<String> shortenUrl(@RequestBody String url, HttpServletRequest request) {
-        UrlMapping urlMapping = service.createShortUrl(url);
+    public ResponseEntity<String> shortenUrl(@RequestBody String url, HttpServletRequest request) throws Exception {
+        UrlMapping urlMapping = shortUrlProducerService.sendMessage(url);
 
         String baseUrl = request.getRequestURL()
                 .toString()
                 .replace(request.getRequestURI(), request.getContextPath());
 
         String shortUrl = baseUrl + API_URL_SHORTENER + "/" + urlMapping.getShortCode();
-
-        producerService.sendMessage(shortUrl);
 
         return ResponseEntity.ok(shortUrl);
     }

@@ -1,8 +1,12 @@
 spring:
+  application:
+    name: url-shortener
+
   docker:
     compose:
       enabled: true
       file: ./docker-compose.yml
+
   data:
     mongodb:
       host: mongodb
@@ -18,7 +22,16 @@ spring:
       group-id: url-shortener-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+kafka:
+  topic:
+    requestreply:
+      request: url.shortener.request
+      reply: url.shortener.reply
