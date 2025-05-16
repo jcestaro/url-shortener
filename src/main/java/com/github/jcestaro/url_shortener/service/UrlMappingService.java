@@ -3,6 +3,8 @@ package com.github.jcestaro.url_shortener.service;
 import com.github.jcestaro.url_shortener.infra.UrlMappingRepository;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +31,13 @@ public class UrlMappingService {
         return repository.findByShortCode(shortCode);
     }
 
+    @SendTo
     @Transactional
+    @KafkaListener(
+            topics = "${kafka.topic.requestreply.request}",
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "kafkaListenerContainerFactoryString"
+    )
     public UrlMapping createShortUrl(String originalUrl) {
         String shortCode = generateShortUrl();
         UrlMapping shortUrl = new UrlMapping(originalUrl, shortCode);
