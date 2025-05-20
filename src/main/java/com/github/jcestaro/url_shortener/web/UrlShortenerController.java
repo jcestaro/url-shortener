@@ -1,8 +1,8 @@
 package com.github.jcestaro.url_shortener.web;
 
 import com.github.jcestaro.url_shortener.model.UrlMapping;
-import com.github.jcestaro.url_shortener.service.UrlMappingService;
-import com.github.jcestaro.url_shortener.service.producer.ShortUrlProducerService;
+import com.github.jcestaro.url_shortener.service.producer.FindUrlProducerService;
+import com.github.jcestaro.url_shortener.service.producer.ShortUrlCreatorProducerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,18 +19,18 @@ public class UrlShortenerController {
 
     public static final String API_URL_SHORTENER = "/api/url-shortener";
 
-    private final UrlMappingService service;
-    private final ShortUrlProducerService shortUrlProducerService;
+    private final FindUrlProducerService findUrlProducerService;
+    private final ShortUrlCreatorProducerService shortUrlCreatorProducerService;
 
     @Autowired
-    public UrlShortenerController(UrlMappingService service, ShortUrlProducerService shortUrlProducerService) {
-        this.service = service;
-        this.shortUrlProducerService = shortUrlProducerService;
+    public UrlShortenerController(FindUrlProducerService findUrlProducerService, ShortUrlCreatorProducerService shortUrlCreatorProducerService) {
+        this.findUrlProducerService = findUrlProducerService;
+        this.shortUrlCreatorProducerService = shortUrlCreatorProducerService;
     }
 
     @PostMapping
     public ResponseEntity<String> shortenUrl(@RequestBody String url, HttpServletRequest request) throws Exception {
-        UrlMapping urlMapping = shortUrlProducerService.sendMessage(url);
+        UrlMapping urlMapping = shortUrlCreatorProducerService.sendMessage(url);
 
         String baseUrl = request.getRequestURL()
                 .toString()
@@ -42,12 +42,12 @@ public class UrlShortenerController {
     }
 
     @GetMapping("/{shortCode}")
-    public ResponseEntity<Void> redirect(@PathVariable String shortCode) {
-        return service.findByShortCode(shortCode)
-                .<ResponseEntity<Void>>map(urlMapping -> ResponseEntity.status(HttpStatus.FOUND)
-                        .location(URI.create(urlMapping.getOriginalUrl()))
-                        .build())
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Void> redirect(@PathVariable String shortCode) throws Exception {
+        UrlMapping urlMapping = findUrlProducerService.sendMessage(shortCode);
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(urlMapping.getOriginalUrl()))
+                .build();
     }
 
 }

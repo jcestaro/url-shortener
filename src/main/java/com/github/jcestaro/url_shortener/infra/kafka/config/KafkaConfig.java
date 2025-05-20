@@ -18,11 +18,11 @@ public class KafkaConfig {
 
     private static final String REPLY = "-reply";
 
-    @Value("${kafka.topic.requestreply.request}")
-    private String requestTopic;
+    @Value("${kafka.topic.requestreply.shorturlcreator.reply}")
+    private String replyShortUrlCreatorTopic;
 
-    @Value("${kafka.topic.requestreply.reply}")
-    private String replyTopic;
+    @Value("${kafka.topic.requestreply.findurl.reply}")
+    private String replyFindUrlTopic;
 
     @Value("${spring.kafka.consumer.group-id}")
     private String groupId;
@@ -73,19 +73,36 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainerUrlMapping() {
+    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainerUrlMappingCreator() {
         return kafkaGenericFactory.genericRepliesContainer(
                 consumerFactoryUrlMapping(),
-                replyTopic,
+                replyShortUrlCreatorTopic,
                 groupId + REPLY
         );
     }
 
     @Bean
-    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplateUrlMapping() {
+    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainerUrlMappingFinder() {
+        return kafkaGenericFactory.genericRepliesContainer(
+                consumerFactoryUrlMapping(),
+                replyFindUrlTopic,
+                groupId + REPLY
+        );
+    }
+
+    @Bean
+    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplateUrlMappingCreator() {
         return kafkaGenericFactory.genericReplyingKafkaTemplate(
                 producerFactoryString(),
-                repliesContainerUrlMapping()
+                repliesContainerUrlMappingCreator()
+        );
+    }
+
+    @Bean
+    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplateUrlMappingFinder() {
+        return kafkaGenericFactory.genericReplyingKafkaTemplate(
+                producerFactoryString(),
+                repliesContainerUrlMappingFinder()
         );
     }
 

@@ -8,7 +8,6 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.Random;
 
 import static org.apache.catalina.manager.Constants.CHARSET;
@@ -26,15 +25,22 @@ public class UrlMappingService {
         this.repository = repository;
     }
 
+    @SendTo
     @Transactional(readOnly = true)
-    public Optional<UrlMapping> findByShortCode(String shortCode) {
-        return repository.findByShortCode(shortCode);
+    @KafkaListener(
+            topics = "${kafka.topic.requestreply.findurl.request}",
+            groupId = "${spring.kafka.consumer.group-id}",
+            containerFactory = "kafkaListenerContainerFactoryString"
+    )
+    public UrlMapping findByShortCode(String shortCode) {
+        return repository.findByShortCode(shortCode)
+                .orElseThrow(() -> new RuntimeException("URL not found"));
     }
 
     @SendTo
     @Transactional
     @KafkaListener(
-            topics = "${kafka.topic.requestreply.request}",
+            topics = "${kafka.topic.requestreply.shorturlcreator.request}",
             groupId = "${spring.kafka.consumer.group-id}",
             containerFactory = "kafkaListenerContainerFactoryString"
     )

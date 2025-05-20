@@ -62,10 +62,9 @@ class UrlMappingServiceTest {
 
             when(repository.findByShortCode(shortCode)).thenReturn(Optional.of(expected));
 
-            Optional<UrlMapping> result = service.findByShortCode(shortCode);
+            UrlMapping result = service.findByShortCode(shortCode);
 
-            assertTrue(result.isPresent());
-            assertEquals(expected.getOriginalUrl(), result.get().getOriginalUrl());
+            assertEquals(expected.getOriginalUrl(), result.getOriginalUrl());
         }
 
         @Test
@@ -75,9 +74,8 @@ class UrlMappingServiceTest {
 
             when(repository.findByShortCode(shortCode)).thenReturn(Optional.empty());
 
-            Optional<UrlMapping> result = service.findByShortCode(shortCode);
-
-            assertTrue(result.isEmpty());
+            RuntimeException ex = assertThrows(RuntimeException.class, () -> service.findByShortCode(shortCode));
+            assertEquals("URL not found", ex.getMessage());
         }
     }
 }

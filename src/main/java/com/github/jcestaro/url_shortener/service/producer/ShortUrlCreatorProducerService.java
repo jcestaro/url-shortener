@@ -2,13 +2,17 @@ package com.github.jcestaro.url_shortener.service.producer;
 
 import com.github.jcestaro.url_shortener.infra.kafka.template.ProducerTemplate;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ShortUrlProducerService extends ProducerTemplate<String, UrlMapping> {
+public class ShortUrlCreatorProducerService extends ProducerTemplate<String, UrlMapping> {
 
-    private static final String KEY = "url-mapping-key";
+    private static final String KEY = "url-mapping-short-url-producer-key";
+
+    @Value("${kafka.topic.requestreply.shorturlcreator.request}")
+    private String requestTopic;
 
     @Override
     protected String getKey() {
@@ -16,8 +20,13 @@ public class ShortUrlProducerService extends ProducerTemplate<String, UrlMapping
     }
 
     @Override
+    protected String getRequestTopic() {
+        return requestTopic;
+    }
+
+    @Override
     protected ReplyingKafkaTemplate<String, String, UrlMapping> getReplyingKafkaTemplate() {
-        return kafkaConfig.replyingKafkaTemplateUrlMapping();
+        return kafkaConfig.replyingKafkaTemplateUrlMappingCreator();
     }
 
 }

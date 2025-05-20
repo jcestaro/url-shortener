@@ -30,9 +30,11 @@ public class IntegrationTestBase {
 
         // Kafka properties
         registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
-        registry.add("kafka.topic.requestreply.request", () -> "url.shortener.request");
-        registry.add("kafka.topic.requestreply.reply", () -> "url.shortener.reply");
         registry.add("spring.kafka.consumer.group-id", () -> "url-shortener-group");
+        registry.add("kafka.topic.requestreply.shorturlcreator.request", () -> "url.shortener.create.url.request");
+        registry.add("kafka.topic.requestreply.shorturlcreator.reply", () -> "url.shortener.create.url.reply");
+        registry.add("kafka.topic.requestreply.findurl.request", () -> "url.shortener.find.url.request");
+        registry.add("kafka.topic.requestreply.findurl.reply", () -> "url.shortener.find.url.reply");
     }
 
 }

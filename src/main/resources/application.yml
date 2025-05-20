@@ -33,5 +33,9 @@ spring:
 kafka:
   topic:
     requestreply:
-      request: url.shortener.request
-      reply: url.shortener.reply
+      shorturlcreator:
+        request: url.shortener.create.url.request
+        reply: url.shortener.create.url.reply
+      findurl:
+        request: url.shortener.find.url.request
+        reply: url.shortener.find.url.reply
