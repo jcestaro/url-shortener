@@ -1,6 +1,7 @@
 package com.github.jcestaro.url_shortener.service;
 
 import com.github.jcestaro.url_shortener.infra.UrlMappingRepository;
+import com.github.jcestaro.url_shortener.infra.exception.UrlNotFoundException;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -34,7 +35,7 @@ public class UrlMappingService {
     )
     public UrlMapping findByShortCode(String shortCode) {
         return repository.findByShortCode(shortCode)
-                .orElseThrow(() -> new RuntimeException("URL not found"));
+                .orElseThrow(() -> new UrlNotFoundException(shortCode));
     }
 
     @SendTo
