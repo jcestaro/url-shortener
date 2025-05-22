@@ -31,7 +31,7 @@ kafka:
 
 logging:
   level:
-    org.springframework.kafka: WARN
+    org.springframework.kafka: DEBUG
     org.apache.kafka: WARN
     org.mongodb.driver: WARN
     com.github.jcestaro.url_shortener: DEBUG

@@ -3,8 +3,6 @@ package com.github.jcestaro.url_shortener.web;
 import com.github.jcestaro.url_shortener.base.IntegrationTestBase;
 import com.github.jcestaro.url_shortener.infra.UrlMappingRepository;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +31,6 @@ class UrlShortenerControllerIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private UrlMappingRepository repository;
-
-    @BeforeEach
-    @AfterEach
-    void cleanupDatabase() {
-        repository.deleteAll();
-    }
 
     @Test
     @DisplayName("Should shorten a URL, process via Kafka, and return the shortened link")

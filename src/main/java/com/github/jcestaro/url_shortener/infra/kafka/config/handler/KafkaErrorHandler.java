@@ -20,6 +20,11 @@ public class KafkaErrorHandler {
 
         // Retry 3 times with 2s delay
         FixedBackOff backOff = new FixedBackOff(2000L, 3);
-        return new DefaultErrorHandler(recoverer, backOff);
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
+
+        errorHandler.setCommitRecovered(false);
+        errorHandler.addNotRetryableExceptions(Exception.class);
+
+        return errorHandler;
     }
 }
