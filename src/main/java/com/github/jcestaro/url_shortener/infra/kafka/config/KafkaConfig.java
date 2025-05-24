@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -19,6 +21,12 @@ import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 public class KafkaConfig {
 
     private static final String REPLY = "-reply";
+
+    @Value("${kafka.topic.requestreply.shorturlcreator.request}")
+    private String createUrlRequestTopicName;
+
+    @Value("${kafka.topic.requestreply.findurl.request}")
+    private String findUrlRequestTopicName;
 
     @Value("${kafka.topic.requestreply.shorturlcreator.reply}")
     private String replyShortUrlCreatorTopic;
@@ -30,6 +38,28 @@ public class KafkaConfig {
     private String groupId;
 
     private final KafkaGenericFactory kafkaGenericFactory;
+
+    @Bean
+    public KafkaAdmin.NewTopics topicsToEnsureExist() {
+        return new KafkaAdmin.NewTopics(
+                TopicBuilder.name(createUrlRequestTopicName)
+                        .partitions(1)
+                        .replicas(1)
+                        .build(),
+                TopicBuilder.name(replyShortUrlCreatorTopic)
+                        .partitions(1)
+                        .replicas(1)
+                        .build(),
+                TopicBuilder.name(findUrlRequestTopicName)
+                        .partitions(1)
+                        .replicas(1)
+                        .build(),
+                TopicBuilder.name(replyFindUrlTopic)
+                        .partitions(1)
+                        .replicas(1)
+                        .build()
+        );
+    }
 
     @Autowired
     public KafkaConfig(KafkaGenericFactory kafkaGenericFactory) {

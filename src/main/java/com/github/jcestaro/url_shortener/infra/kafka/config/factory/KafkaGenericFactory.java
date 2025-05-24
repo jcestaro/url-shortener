@@ -71,7 +71,7 @@ public class KafkaGenericFactory {
         factory.getContainerProperties().setGroupId(replyGroupId);
 
         ConcurrentMessageListenerContainer<K, Response<R>> container = factory.createContainer(topic);
-        container.setAutoStartup(false);
+        container.setAutoStartup(true);
         return container;
     }
 

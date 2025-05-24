@@ -7,6 +7,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -25,7 +26,8 @@ public class IntegrationTestBaseIT {
 
     @Container
     static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.0"))
-            .withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "true");
+            .withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "true")
+            .waitingFor(Wait.forLogMessage(".*KafkaServer.*started.*", 1));
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
