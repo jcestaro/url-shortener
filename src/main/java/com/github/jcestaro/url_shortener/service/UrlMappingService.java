@@ -31,6 +31,12 @@ public class UrlMappingService {
 
     @Transactional
     public UrlMapping createShortUrl(String originalUrl) {
+        Optional<UrlMapping> possibleExistingMapping = repository.findByOriginalUrl(originalUrl);
+
+        if (possibleExistingMapping.isPresent()) {
+            return possibleExistingMapping.get();
+        }
+
         String shortCode = generateShortUrl();
         UrlMapping shortUrl = new UrlMapping(originalUrl, shortCode);
         return repository.save(shortUrl);
