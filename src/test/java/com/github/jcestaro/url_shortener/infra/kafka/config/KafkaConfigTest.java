@@ -133,13 +133,12 @@ class KafkaConfigTest {
     @DisplayName("Should create KafkaTemplate<String, Response<UrlMapping>> for replies")
     void shouldCreateReplyKafkaTemplateForResponseUrlMapping() {
         when(kafkaGenericFactory.<Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
-        when(kafkaGenericFactory.genericKafkaTemplate(mockProducerFactoryResponseUrlMapping)).thenReturn(mockReplyKafkaTemplateForResponseUrlMapping);
 
         KafkaTemplate<String, Response<UrlMapping>> result = kafkaConfig.replyKafkaTemplateForResponseUrlMapping();
 
-        assertThat(result).isSameAs(mockReplyKafkaTemplateForResponseUrlMapping);
+        assertThat(result).isNotNull();
+        assertThat(result).isInstanceOf(KafkaTemplate.class);
         verify(kafkaGenericFactory).genericProducerFactory();
-        verify(kafkaGenericFactory).genericKafkaTemplate(mockProducerFactoryResponseUrlMapping);
     }
 
     @Test

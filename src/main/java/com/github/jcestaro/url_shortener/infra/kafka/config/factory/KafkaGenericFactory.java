@@ -36,6 +36,9 @@ public class KafkaGenericFactory {
     public <V> ProducerFactory<String, V> genericProducerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
         JsonSerializer<V> jsonSerializer = new JsonSerializer<>(this.objectMapper);
         return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), jsonSerializer);
     }
@@ -45,6 +48,7 @@ public class KafkaGenericFactory {
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
         JsonDeserializer<V> deserializer = new JsonDeserializer<>(valueClass, this.objectMapper, false);
 
