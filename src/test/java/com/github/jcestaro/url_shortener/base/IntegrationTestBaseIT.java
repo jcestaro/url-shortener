@@ -1,5 +1,6 @@
 package com.github.jcestaro.url_shortener.base;
 
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -10,9 +11,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class IntegrationTestBase {
+public class IntegrationTestBaseIT {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -21,7 +24,8 @@ public class IntegrationTestBase {
     static MongoDBContainer mongo = new MongoDBContainer("mongo:6.0").withExposedPorts(27017);
 
     @Container
-    static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.0"));
+    static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.3.0"))
+            .withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "true");
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
@@ -35,6 +39,12 @@ public class IntegrationTestBase {
         registry.add("kafka.topic.requestreply.shorturlcreator.reply", () -> "url.shortener.create.url.reply");
         registry.add("kafka.topic.requestreply.findurl.request", () -> "url.shortener.find.url.request");
         registry.add("kafka.topic.requestreply.findurl.reply", () -> "url.shortener.find.url.reply");
+    }
+
+    @Test
+    void testContainersShouldStart() {
+        assertTrue(mongo.isRunning());
+        assertTrue(kafka.isRunning());
     }
 
 }

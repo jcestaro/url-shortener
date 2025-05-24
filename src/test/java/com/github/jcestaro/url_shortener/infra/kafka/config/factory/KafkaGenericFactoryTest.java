@@ -1,5 +1,7 @@
 package com.github.jcestaro.url_shortener.infra.kafka.config.factory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -53,7 +55,8 @@ class KafkaGenericFactoryTest {
     @DisplayName("should create ConsumerFactory with correct configuration")
     void shouldCreateGenericConsumerFactoryWithMocking() {
         var groupId = "mock-group";
-        ConsumerFactory<String, String> consumerFactory = kafkaGenericFactory.genericConsumerFactory(String.class, groupId);
+        ConsumerFactory<String, String> consumerFactory = kafkaGenericFactory.genericConsumerFactory(new TypeReference<>() {
+        }, groupId);
 
         Map<String, Object> config = consumerFactory.getConfigurationProperties();
 
@@ -74,7 +77,7 @@ class KafkaGenericFactoryTest {
     @Test
     @DisplayName("should create listener container with expected group and topic")
     void shouldCreateGenericRepliesContainer() {
-        ConsumerFactory<String, String> cf = mock(ConsumerFactory.class);
+        ConsumerFactory<String, Response<String>> cf = mock(ConsumerFactory.class);
         var container = kafkaGenericFactory.genericRepliesContainer(cf, "reply-topic", "reply-group");
 
         assertThat(container).isInstanceOf(ConcurrentMessageListenerContainer.class);
@@ -86,11 +89,11 @@ class KafkaGenericFactoryTest {
     @DisplayName("should create replying kafka template with mocked container")
     void shouldCreateReplyingKafkaTemplate() {
         ProducerFactory<String, String> pf = mock(ProducerFactory.class);
-        ConcurrentMessageListenerContainer<String, String> repliesContainer = mock(ConcurrentMessageListenerContainer.class);
+        ConcurrentMessageListenerContainer<String, Response<String>> repliesContainer = mock(ConcurrentMessageListenerContainer.class);
 
         when(repliesContainer.getContainerProperties()).thenReturn(mock(ContainerProperties.class));
 
-        ReplyingKafkaTemplate<String, String, String> template = kafkaGenericFactory.genericReplyingKafkaTemplate(pf, repliesContainer);
+        ReplyingKafkaTemplate<String, String, Response<String>> template = kafkaGenericFactory.genericReplyingKafkaTemplate(pf, repliesContainer);
 
         assertThat(template).isNotNull();
     }

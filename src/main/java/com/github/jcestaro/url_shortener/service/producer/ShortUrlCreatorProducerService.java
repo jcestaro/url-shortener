@@ -1,5 +1,6 @@
 package com.github.jcestaro.url_shortener.service.producer;
 
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import com.github.jcestaro.url_shortener.infra.kafka.template.ProducerTemplate;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,7 +8,7 @@ import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ShortUrlCreatorProducerService extends ProducerTemplate<String, UrlMapping> {
+public class ShortUrlCreatorProducerService extends ProducerTemplate<String, Response<UrlMapping>> {
 
     private static final String KEY = "url-mapping-short-url-producer-key";
 
@@ -25,7 +26,7 @@ public class ShortUrlCreatorProducerService extends ProducerTemplate<String, Url
     }
 
     @Override
-    protected ReplyingKafkaTemplate<String, String, UrlMapping> getReplyingKafkaTemplate() {
+    protected ReplyingKafkaTemplate<String, String, Response<UrlMapping>> getReplyingKafkaTemplate() {
         return kafkaConfig.replyingKafkaTemplateUrlMappingCreator();
     }
 

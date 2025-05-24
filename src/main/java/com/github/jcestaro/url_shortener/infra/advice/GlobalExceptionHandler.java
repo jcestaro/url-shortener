@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -21,7 +22,17 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler({KafkaException.class, KafkaReplyTimeoutException.class, ListenerExecutionFailedException.class})
+    @ExceptionHandler({ListenerExecutionFailedException.class, ExecutionException.class})
+    public ResponseEntity<Object> handleListenerExecutionFailedException(Exception ex) {
+        Throwable cause = ex.getCause();
+        if (cause instanceof UrlNotFoundException) {
+            return handleUrlNotFoundException((UrlNotFoundException) cause);
+        }
+
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Kafka listener failed: " + ex.getMessage());
+    }
+
+    @ExceptionHandler({KafkaException.class, KafkaReplyTimeoutException.class})
     public ResponseEntity<Object> handleKafkaExceptions(Exception ex) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error communicating with Kafka: " + ex.getMessage());
     }

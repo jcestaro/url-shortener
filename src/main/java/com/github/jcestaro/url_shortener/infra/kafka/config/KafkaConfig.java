@@ -1,6 +1,8 @@
 package com.github.jcestaro.url_shortener.infra.kafka.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.jcestaro.url_shortener.infra.kafka.config.factory.KafkaGenericFactory;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,58 +42,63 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ProducerFactory<String, UrlMapping> producerFactoryUrlMapping() {
-        return kafkaGenericFactory.genericProducerFactory();
-    }
-
-    @Bean
     public KafkaTemplate<String, String> kafkaTemplateString() {
         return kafkaGenericFactory.genericKafkaTemplate(producerFactoryString());
     }
 
     @Bean
-    public KafkaTemplate<String, UrlMapping> kafkaTemplateUrlMapping() {
-        return kafkaGenericFactory.genericKafkaTemplate(producerFactoryUrlMapping());
-    }
-
-    @Bean
     public ConsumerFactory<String, String> consumerFactoryString() {
-        return kafkaGenericFactory.genericConsumerFactory(String.class, groupId);
+        return kafkaGenericFactory.genericConsumerFactory(new TypeReference<>() {
+        }, groupId);
     }
 
     @Bean
-    public ConsumerFactory<String, UrlMapping> consumerFactoryUrlMapping() {
-        return kafkaGenericFactory.genericConsumerFactory(UrlMapping.class, groupId + REPLY);
+    public ConsumerFactory<String, Response<UrlMapping>> consumerFactoryUrlMappingResponse() {
+        return kafkaGenericFactory.genericConsumerFactory(new TypeReference<>() {
+        }, groupId + REPLY);
+    }
+
+    @Bean
+    public ProducerFactory<String, Response<UrlMapping>> producerFactoryResponseUrlMapping() {
+        return kafkaGenericFactory.genericProducerFactory();
+    }
+
+    @Bean
+    public KafkaTemplate<String, Response<UrlMapping>> replyKafkaTemplateForResponseUrlMapping() {
+        return new KafkaTemplate<>(producerFactoryResponseUrlMapping());
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactoryString(
-            ConsumerFactory<String, String> consumerFactoryString,
-            KafkaTemplate<String, UrlMapping> kafkaTemplateUrlMapping
+            ConsumerFactory<String, String> plainStringConsumerFactory,
+            KafkaTemplate<String, Response<UrlMapping>> replyKafkaTemplateForResponseUrlMapping
     ) {
-        return kafkaGenericFactory.genericKafkaListenerFactory(consumerFactoryString, kafkaTemplateUrlMapping);
+        return kafkaGenericFactory.genericKafkaListenerFactory(
+                plainStringConsumerFactory,
+                replyKafkaTemplateForResponseUrlMapping
+        );
     }
 
     @Bean
-    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainerUrlMappingCreator() {
+    public ConcurrentMessageListenerContainer<String, Response<UrlMapping>> repliesContainerUrlMappingCreator() {
         return kafkaGenericFactory.genericRepliesContainer(
-                consumerFactoryUrlMapping(),
+                consumerFactoryUrlMappingResponse(),
                 replyShortUrlCreatorTopic,
                 groupId + REPLY
         );
     }
 
     @Bean
-    public ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainerUrlMappingFinder() {
+    public ConcurrentMessageListenerContainer<String, Response<UrlMapping>> repliesContainerUrlMappingFinder() {
         return kafkaGenericFactory.genericRepliesContainer(
-                consumerFactoryUrlMapping(),
+                consumerFactoryUrlMappingResponse(),
                 replyFindUrlTopic,
                 groupId + REPLY
         );
     }
 
     @Bean
-    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplateUrlMappingCreator() {
+    public ReplyingKafkaTemplate<String, String, Response<UrlMapping>> replyingKafkaTemplateUrlMappingCreator() {
         return kafkaGenericFactory.genericReplyingKafkaTemplate(
                 producerFactoryString(),
                 repliesContainerUrlMappingCreator()
@@ -99,11 +106,10 @@ public class KafkaConfig {
     }
 
     @Bean
-    public ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplateUrlMappingFinder() {
+    public ReplyingKafkaTemplate<String, String, Response<UrlMapping>> replyingKafkaTemplateUrlMappingFinder() {
         return kafkaGenericFactory.genericReplyingKafkaTemplate(
                 producerFactoryString(),
                 repliesContainerUrlMappingFinder()
         );
     }
-
 }

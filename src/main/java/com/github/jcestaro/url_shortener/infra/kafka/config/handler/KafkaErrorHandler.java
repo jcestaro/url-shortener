@@ -1,5 +1,6 @@
 package com.github.jcestaro.url_shortener.infra.kafka.config.handler;
 
+import com.github.jcestaro.url_shortener.infra.exception.BusinessException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ConsumerRecordRecoverer;
@@ -23,7 +24,7 @@ public class KafkaErrorHandler {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
 
         errorHandler.setCommitRecovered(false);
-        errorHandler.addNotRetryableExceptions(Exception.class);
+        errorHandler.addNotRetryableExceptions(BusinessException.class);
 
         return errorHandler;
     }

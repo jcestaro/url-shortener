@@ -1,5 +1,7 @@
 package com.github.jcestaro.url_shortener.infra.kafka.config.factory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -30,7 +32,7 @@ public class KafkaGenericFactory {
         return new DefaultKafkaProducerFactory<>(props);
     }
 
-    public <V> ConsumerFactory<String, V> genericConsumerFactory(Class<V> valueClass, String consumerGroupId) {
+    public <V> ConsumerFactory<String, V> genericConsumerFactory(TypeReference<V> valueClass, String consumerGroupId) {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
@@ -59,23 +61,23 @@ public class KafkaGenericFactory {
         return factory;
     }
 
-    public <K, R> ConcurrentMessageListenerContainer<K, R> genericRepliesContainer(
-            ConsumerFactory<K, R> cf,
+    public <K, R> ConcurrentMessageListenerContainer<K, Response<R>> genericRepliesContainer(
+            ConsumerFactory<K, Response<R>> cf,
             String topic,
             String replyGroupId
     ) {
-        ConcurrentKafkaListenerContainerFactory<K, R> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<K, Response<R>> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(cf);
         factory.getContainerProperties().setGroupId(replyGroupId);
 
-        ConcurrentMessageListenerContainer<K, R> container = factory.createContainer(topic);
+        ConcurrentMessageListenerContainer<K, Response<R>> container = factory.createContainer(topic);
         container.setAutoStartup(false);
         return container;
     }
 
-    public <K, V, R> ReplyingKafkaTemplate<K, V, R> genericReplyingKafkaTemplate(
+    public <K, V, R> ReplyingKafkaTemplate<K, V, Response<R>> genericReplyingKafkaTemplate(
             ProducerFactory<K, V> pf,
-            ConcurrentMessageListenerContainer<K, R> repliesContainer
+            ConcurrentMessageListenerContainer<K, Response<R>> repliesContainer
     ) {
         return new ReplyingKafkaTemplate<>(pf, repliesContainer);
     }

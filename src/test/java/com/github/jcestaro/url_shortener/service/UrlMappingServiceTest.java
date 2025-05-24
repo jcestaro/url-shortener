@@ -1,6 +1,8 @@
 package com.github.jcestaro.url_shortener.service;
 
 import com.github.jcestaro.url_shortener.infra.UrlMappingRepository;
+import com.github.jcestaro.url_shortener.infra.exception.UrlNotFoundException;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -62,20 +64,23 @@ class UrlMappingServiceTest {
 
             when(repository.findByShortCode(shortCode)).thenReturn(Optional.of(expected));
 
-            UrlMapping result = service.findByShortCode(shortCode);
+            Response<UrlMapping> result = service.findByShortCode(shortCode);
 
-            assertEquals(expected.getOriginalUrl(), result.getOriginalUrl());
+            assertEquals(expected.getOriginalUrl(), result.getData().getOriginalUrl());
         }
 
         @Test
-        @DisplayName("should return empty when shortCode does not exist")
+        @DisplayName("should return response with exception when shortCode does not exist")
         void shouldReturnEmpty() {
             String shortCode = "nonexistent";
 
             when(repository.findByShortCode(shortCode)).thenReturn(Optional.empty());
 
-            RuntimeException ex = assertThrows(RuntimeException.class, () -> service.findByShortCode(shortCode));
-            assertEquals("URL not found", ex.getMessage());
+            Response<UrlMapping> response = service.findByShortCode(shortCode);
+            Exception exception = response.getException();
+
+            assertInstanceOf(UrlNotFoundException.class, exception);
+            assertEquals("URL not found for code: nonexistent", exception.getMessage());
         }
     }
 }

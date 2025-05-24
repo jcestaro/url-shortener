@@ -1,6 +1,8 @@
 package com.github.jcestaro.url_shortener.infra.kafka.config;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.jcestaro.url_shortener.infra.kafka.config.factory.KafkaGenericFactory;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +19,8 @@ import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +29,7 @@ class KafkaConfigTest {
     private static final String SHORT_URL_REPLY = "url-shortener-short-url-reply";
     private static final String FIND_URL_REPLY = "url-shortener-find-url-reply";
     private static final String TEST_GROUP = "test-group";
+    private static final String TEST_GROUP_REPLY = "test-group-reply"; // TEST_GROUP + "-reply"
 
     @InjectMocks
     private KafkaConfig kafkaConfig;
@@ -33,31 +38,31 @@ class KafkaConfigTest {
     private KafkaGenericFactory kafkaGenericFactory;
 
     @Mock
-    private ProducerFactory<String, String> producerFactoryString;
+    private ProducerFactory<String, String> mockProducerFactoryString;
 
     @Mock
-    private ProducerFactory<String, UrlMapping> producerFactoryUrlMapping;
+    private KafkaTemplate<String, String> mockKafkaTemplateString;
 
     @Mock
-    private KafkaTemplate<String, String> kafkaTemplateString;
+    private ConsumerFactory<String, String> mockConsumerFactoryPlainString;
 
     @Mock
-    private KafkaTemplate<String, UrlMapping> kafkaTemplateUrlMapping;
+    private ConsumerFactory<String, Response<UrlMapping>> mockConsumerFactoryUrlMappingResponse;
 
     @Mock
-    private ConsumerFactory<String, String> consumerFactoryString;
+    private ProducerFactory<String, Response<UrlMapping>> mockProducerFactoryResponseUrlMapping;
 
     @Mock
-    private ConsumerFactory<String, UrlMapping> consumerFactoryUrlMapping;
+    private KafkaTemplate<String, Response<UrlMapping>> mockReplyKafkaTemplateForResponseUrlMapping;
 
     @Mock
-    private ConcurrentKafkaListenerContainerFactory<String, String> listenerFactory;
+    private ConcurrentKafkaListenerContainerFactory<String, String> mockKafkaListenerContainerFactoryString;
 
     @Mock
-    private ConcurrentMessageListenerContainer<String, UrlMapping> repliesContainer;
+    private ConcurrentMessageListenerContainer<String, Response<UrlMapping>> mockRepliesContainer;
 
     @Mock
-    private ReplyingKafkaTemplate<String, String, UrlMapping> replyingKafkaTemplate;
+    private ReplyingKafkaTemplate<String, String, Response<UrlMapping>> mockReplyingKafkaTemplate;
 
     @BeforeEach
     void setUp() {
@@ -70,119 +75,135 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create ProducerFactory<String, String>")
     void shouldCreateProducerFactoryString() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(producerFactoryString);
+        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
 
         ProducerFactory<String, String> result = kafkaConfig.producerFactoryString();
 
-        assertThat(result).isSameAs(producerFactoryString);
-        verify(kafkaGenericFactory).genericProducerFactory();
-    }
-
-    @Test
-    @DisplayName("Should create ProducerFactory<String, UrlMapping>")
-    void shouldCreateProducerFactoryUrlMapping() {
-        when(kafkaGenericFactory.<String, UrlMapping>genericProducerFactory()).thenReturn(producerFactoryUrlMapping);
-
-        ProducerFactory<String, UrlMapping> result = kafkaConfig.producerFactoryUrlMapping();
-
-        assertThat(result).isSameAs(producerFactoryUrlMapping);
+        assertThat(result).isSameAs(mockProducerFactoryString);
         verify(kafkaGenericFactory).genericProducerFactory();
     }
 
     @Test
     @DisplayName("Should create KafkaTemplate<String, String>")
     void shouldCreateKafkaTemplateString() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(producerFactoryString);
-        when(kafkaGenericFactory.genericKafkaTemplate(producerFactoryString)).thenReturn(kafkaTemplateString);
+        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.genericKafkaTemplate(mockProducerFactoryString)).thenReturn(mockKafkaTemplateString);
 
         KafkaTemplate<String, String> result = kafkaConfig.kafkaTemplateString();
 
-        assertThat(result).isSameAs(kafkaTemplateString);
-        verify(kafkaGenericFactory).genericKafkaTemplate(producerFactoryString);
-    }
-
-    @Test
-    @DisplayName("Should create KafkaTemplate<String, UrlMapping>")
-    void shouldCreateKafkaTemplateUrlMapping() {
-        when(kafkaGenericFactory.<String, UrlMapping>genericProducerFactory()).thenReturn(producerFactoryUrlMapping);
-        when(kafkaGenericFactory.genericKafkaTemplate(producerFactoryUrlMapping)).thenReturn(kafkaTemplateUrlMapping);
-
-        KafkaTemplate<String, UrlMapping> result = kafkaConfig.kafkaTemplateUrlMapping();
-
-        assertThat(result).isSameAs(kafkaTemplateUrlMapping);
-        verify(kafkaGenericFactory).genericKafkaTemplate(producerFactoryUrlMapping);
+        assertThat(result).isSameAs(mockKafkaTemplateString);
+        verify(kafkaGenericFactory).genericProducerFactory();
+        verify(kafkaGenericFactory).genericKafkaTemplate(mockProducerFactoryString);
     }
 
     @Test
     @DisplayName("Should create ConsumerFactory<String, String>")
     void shouldCreateConsumerFactoryString() {
-        when(kafkaGenericFactory.genericConsumerFactory(String.class, TEST_GROUP)).thenReturn(consumerFactoryString);
+        when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP))).thenReturn(mockConsumerFactoryPlainString);
 
         ConsumerFactory<String, String> result = kafkaConfig.consumerFactoryString();
 
-        assertThat(result).isSameAs(consumerFactoryString);
-        verify(kafkaGenericFactory).genericConsumerFactory(String.class, TEST_GROUP);
+        assertThat(result).isSameAs(mockConsumerFactoryPlainString);
+        verify(kafkaGenericFactory).genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP));
     }
 
     @Test
-    @DisplayName("Should create ConsumerFactory<String, UrlMapping>")
-    void shouldCreateConsumerFactoryUrlMapping() {
-        when(kafkaGenericFactory.genericConsumerFactory(UrlMapping.class, "test-group-reply")).thenReturn(consumerFactoryUrlMapping);
+    @DisplayName("Should create ConsumerFactory<String, Response<UrlMapping>> for replies")
+    void shouldCreateConsumerFactoryUrlMappingResponse() {
+        when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
 
-        ConsumerFactory<String, UrlMapping> result = kafkaConfig.consumerFactoryUrlMapping();
+        ConsumerFactory<String, Response<UrlMapping>> result = kafkaConfig.consumerFactoryUrlMappingResponse();
 
-        assertThat(result).isSameAs(consumerFactoryUrlMapping);
-        verify(kafkaGenericFactory).genericConsumerFactory(UrlMapping.class, "test-group-reply");
+        assertThat(result).isSameAs(mockConsumerFactoryUrlMappingResponse);
+        verify(kafkaGenericFactory).genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY));
+    }
+
+    @Test
+    @DisplayName("Should create ProducerFactory<String, Response<UrlMapping>>")
+    void shouldCreateProducerFactoryResponseUrlMapping() {
+        when(kafkaGenericFactory.<String, Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
+
+        ProducerFactory<String, Response<UrlMapping>> result = kafkaConfig.producerFactoryResponseUrlMapping();
+
+        assertThat(result).isSameAs(mockProducerFactoryResponseUrlMapping);
+        verify(kafkaGenericFactory).genericProducerFactory();
+    }
+
+    @Test
+    @DisplayName("Should create KafkaTemplate<String, Response<UrlMapping>> for replies")
+    void shouldCreateReplyKafkaTemplateForResponseUrlMapping() {
+        when(kafkaGenericFactory.<String, Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
+        when(kafkaGenericFactory.genericKafkaTemplate(mockProducerFactoryResponseUrlMapping)).thenReturn(mockReplyKafkaTemplateForResponseUrlMapping);
+
+        KafkaTemplate<String, Response<UrlMapping>> result = kafkaConfig.replyKafkaTemplateForResponseUrlMapping();
+
+        assertThat(result).isSameAs(mockReplyKafkaTemplateForResponseUrlMapping);
+        verify(kafkaGenericFactory).genericProducerFactory();
+        verify(kafkaGenericFactory).genericKafkaTemplate(mockProducerFactoryResponseUrlMapping);
     }
 
     @Test
     @DisplayName("Should create KafkaListenerContainerFactory<String, String>")
     void shouldCreateKafkaListenerContainerFactoryString() {
-        when(kafkaGenericFactory.genericKafkaListenerFactory(consumerFactoryString, kafkaTemplateUrlMapping)).thenReturn(listenerFactory);
+        when(kafkaGenericFactory.genericKafkaListenerFactory(mockConsumerFactoryPlainString, mockReplyKafkaTemplateForResponseUrlMapping)).thenReturn(mockKafkaListenerContainerFactoryString);
 
-        ConcurrentKafkaListenerContainerFactory<String, String> result = kafkaConfig.kafkaListenerContainerFactoryString(consumerFactoryString, kafkaTemplateUrlMapping);
+        ConcurrentKafkaListenerContainerFactory<String, String> result = kafkaConfig.kafkaListenerContainerFactoryString(mockConsumerFactoryPlainString, mockReplyKafkaTemplateForResponseUrlMapping);
 
-        assertThat(result).isSameAs(listenerFactory);
-        verify(kafkaGenericFactory).genericKafkaListenerFactory(consumerFactoryString, kafkaTemplateUrlMapping);
+        assertThat(result).isSameAs(mockKafkaListenerContainerFactoryString);
+        verify(kafkaGenericFactory).genericKafkaListenerFactory(mockConsumerFactoryPlainString, mockReplyKafkaTemplateForResponseUrlMapping);
     }
 
     @Test
-    @DisplayName("Should create repliesContainerUrlMapping")
+    @DisplayName("Should create repliesContainerUrlMappingCreator")
     void shouldCreateRepliesContainerUrlMappingCreator() {
-        when(kafkaGenericFactory.genericConsumerFactory(UrlMapping.class, "test-group-reply")).thenReturn(consumerFactoryUrlMapping);
-        when(kafkaGenericFactory.genericRepliesContainer(consumerFactoryUrlMapping, SHORT_URL_REPLY, "test-group-reply")).thenReturn(repliesContainer);
+        when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
+        when(kafkaGenericFactory.genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, SHORT_URL_REPLY, TEST_GROUP_REPLY)).thenReturn(mockRepliesContainer);
 
-        ConcurrentMessageListenerContainer<String, UrlMapping> result = kafkaConfig.repliesContainerUrlMappingCreator();
+        ConcurrentMessageListenerContainer<String, Response<UrlMapping>> result = kafkaConfig.repliesContainerUrlMappingCreator();
 
-        assertThat(result).isSameAs(repliesContainer);
-        verify(kafkaGenericFactory).genericRepliesContainer(consumerFactoryUrlMapping, SHORT_URL_REPLY, "test-group-reply");
+        assertThat(result).isSameAs(mockRepliesContainer);
+        verify(kafkaGenericFactory).genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, SHORT_URL_REPLY, TEST_GROUP_REPLY);
+    }
+
+    @Test
+    @DisplayName("Should create repliesContainerUrlMappingFinder")
+    void shouldCreateRepliesContainerUrlMappingFinder() {
+        when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
+
+        when(kafkaGenericFactory.genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, FIND_URL_REPLY, TEST_GROUP_REPLY)).thenReturn(mockRepliesContainer);
+
+        ConcurrentMessageListenerContainer<String, Response<UrlMapping>> result =
+                kafkaConfig.repliesContainerUrlMappingFinder();
+
+        assertThat(result).isSameAs(mockRepliesContainer);
+        verify(kafkaGenericFactory).genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, FIND_URL_REPLY, TEST_GROUP_REPLY);
     }
 
     @Test
     @DisplayName("Should create replyingKafkaTemplateUrlMappingCreator")
     void shouldCreateReplyingKafkaTemplateUrlMappingCreator() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(producerFactoryString);
-        when(kafkaGenericFactory.genericConsumerFactory(UrlMapping.class, "test-group-reply")).thenReturn(consumerFactoryUrlMapping);
-        when(kafkaGenericFactory.genericRepliesContainer(consumerFactoryUrlMapping, SHORT_URL_REPLY, "test-group-reply")).thenReturn(repliesContainer);
-        when(kafkaGenericFactory.genericReplyingKafkaTemplate(producerFactoryString, repliesContainer)).thenReturn(replyingKafkaTemplate);
+        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
+        when(kafkaGenericFactory.genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, SHORT_URL_REPLY, TEST_GROUP_REPLY)).thenReturn(mockRepliesContainer);
+        when(kafkaGenericFactory.genericReplyingKafkaTemplate(mockProducerFactoryString, mockRepliesContainer)).thenReturn(mockReplyingKafkaTemplate);
 
-        ReplyingKafkaTemplate<String, String, UrlMapping> result = kafkaConfig.replyingKafkaTemplateUrlMappingCreator();
+        ReplyingKafkaTemplate<String, String, Response<UrlMapping>> result = kafkaConfig.replyingKafkaTemplateUrlMappingCreator();
 
-        assertThat(result).isSameAs(replyingKafkaTemplate);
-        verify(kafkaGenericFactory).genericReplyingKafkaTemplate(producerFactoryString, repliesContainer);
+        assertThat(result).isSameAs(mockReplyingKafkaTemplate);
+        verify(kafkaGenericFactory).genericReplyingKafkaTemplate(mockProducerFactoryString, mockRepliesContainer);
     }
 
     @Test
     @DisplayName("Should create replyingKafkaTemplateUrlMappingFinder")
     void shouldCreateReplyingKafkaTemplateUrlMappingFinder() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(producerFactoryString);
-        when(kafkaGenericFactory.genericConsumerFactory(UrlMapping.class, "test-group-reply")).thenReturn(consumerFactoryUrlMapping);
-        when(kafkaGenericFactory.genericRepliesContainer(consumerFactoryUrlMapping, FIND_URL_REPLY, "test-group-reply")).thenReturn(repliesContainer);
-        when(kafkaGenericFactory.genericReplyingKafkaTemplate(producerFactoryString, repliesContainer)).thenReturn(replyingKafkaTemplate);
+        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
+        when(kafkaGenericFactory.genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, FIND_URL_REPLY, TEST_GROUP_REPLY)).thenReturn(mockRepliesContainer);
+        when(kafkaGenericFactory.genericReplyingKafkaTemplate(mockProducerFactoryString, mockRepliesContainer)).thenReturn(mockReplyingKafkaTemplate);
 
-        ReplyingKafkaTemplate<String, String, UrlMapping> result = kafkaConfig.replyingKafkaTemplateUrlMappingFinder();
+        ReplyingKafkaTemplate<String, String, Response<UrlMapping>> result = kafkaConfig.replyingKafkaTemplateUrlMappingFinder();
 
-        assertThat(result).isSameAs(replyingKafkaTemplate);
-        verify(kafkaGenericFactory).genericReplyingKafkaTemplate(producerFactoryString, repliesContainer);
+        assertThat(result).isSameAs(mockReplyingKafkaTemplate);
+        verify(kafkaGenericFactory).genericReplyingKafkaTemplate(mockProducerFactoryString, mockRepliesContainer);
     }
 }
