@@ -2,6 +2,7 @@ package com.github.jcestaro.url_shortener.service;
 
 import com.github.jcestaro.url_shortener.infra.UrlMappingRepository;
 import com.github.jcestaro.url_shortener.infra.exception.UrlNotFoundException;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.ErrorInfo;
 import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,10 +79,10 @@ class UrlMappingServiceTest {
             when(repository.findByShortCode(shortCode)).thenReturn(Optional.empty());
 
             Response<UrlMapping> response = service.findByShortCode(shortCode);
-            Exception exception = response.getException();
+            ErrorInfo errorInfo = response.getErrorInfo();
 
-            assertInstanceOf(UrlNotFoundException.class, exception);
-            assertEquals("URL not found for code: nonexistent", exception.getMessage());
+            assertEquals(UrlNotFoundException.class.getName(), errorInfo.getExceptionType());
+            assertEquals("URL not found for code: nonexistent", errorInfo.getMessage());
         }
     }
 }

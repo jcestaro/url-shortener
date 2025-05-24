@@ -75,7 +75,7 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create ProducerFactory<String, String>")
     void shouldCreateProducerFactoryString() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.<String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
 
         ProducerFactory<String, String> result = kafkaConfig.producerFactoryString();
 
@@ -86,7 +86,7 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create KafkaTemplate<String, String>")
     void shouldCreateKafkaTemplateString() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.<String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
         when(kafkaGenericFactory.genericKafkaTemplate(mockProducerFactoryString)).thenReturn(mockKafkaTemplateString);
 
         KafkaTemplate<String, String> result = kafkaConfig.kafkaTemplateString();
@@ -121,7 +121,7 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create ProducerFactory<String, Response<UrlMapping>>")
     void shouldCreateProducerFactoryResponseUrlMapping() {
-        when(kafkaGenericFactory.<String, Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
+        when(kafkaGenericFactory.<Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
 
         ProducerFactory<String, Response<UrlMapping>> result = kafkaConfig.producerFactoryResponseUrlMapping();
 
@@ -132,7 +132,7 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create KafkaTemplate<String, Response<UrlMapping>> for replies")
     void shouldCreateReplyKafkaTemplateForResponseUrlMapping() {
-        when(kafkaGenericFactory.<String, Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
+        when(kafkaGenericFactory.<Response<UrlMapping>>genericProducerFactory()).thenReturn(mockProducerFactoryResponseUrlMapping);
         when(kafkaGenericFactory.genericKafkaTemplate(mockProducerFactoryResponseUrlMapping)).thenReturn(mockReplyKafkaTemplateForResponseUrlMapping);
 
         KafkaTemplate<String, Response<UrlMapping>> result = kafkaConfig.replyKafkaTemplateForResponseUrlMapping();
@@ -182,7 +182,7 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create replyingKafkaTemplateUrlMappingCreator")
     void shouldCreateReplyingKafkaTemplateUrlMappingCreator() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.<String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
         when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
         when(kafkaGenericFactory.genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, SHORT_URL_REPLY, TEST_GROUP_REPLY)).thenReturn(mockRepliesContainer);
         when(kafkaGenericFactory.genericReplyingKafkaTemplate(mockProducerFactoryString, mockRepliesContainer)).thenReturn(mockReplyingKafkaTemplate);
@@ -196,7 +196,7 @@ class KafkaConfigTest {
     @Test
     @DisplayName("Should create replyingKafkaTemplateUrlMappingFinder")
     void shouldCreateReplyingKafkaTemplateUrlMappingFinder() {
-        when(kafkaGenericFactory.<String, String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
+        when(kafkaGenericFactory.<String>genericProducerFactory()).thenReturn(mockProducerFactoryString);
         when(kafkaGenericFactory.genericConsumerFactory(any(TypeReference.class), eq(TEST_GROUP_REPLY))).thenReturn(mockConsumerFactoryUrlMappingResponse);
         when(kafkaGenericFactory.genericRepliesContainer(mockConsumerFactoryUrlMappingResponse, FIND_URL_REPLY, TEST_GROUP_REPLY)).thenReturn(mockRepliesContainer);
         when(kafkaGenericFactory.genericReplyingKafkaTemplate(mockProducerFactoryString, mockRepliesContainer)).thenReturn(mockReplyingKafkaTemplate);

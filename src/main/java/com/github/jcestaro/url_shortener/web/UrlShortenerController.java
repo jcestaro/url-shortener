@@ -1,5 +1,7 @@
 package com.github.jcestaro.url_shortener.web;
 
+import com.github.jcestaro.url_shortener.infra.exception.UrlNotFoundException;
+import com.github.jcestaro.url_shortener.infra.kafka.config.response.ErrorInfo;
 import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import com.github.jcestaro.url_shortener.model.UrlMapping;
 import com.github.jcestaro.url_shortener.service.producer.FindUrlProducerService;
@@ -32,10 +34,7 @@ public class UrlShortenerController {
     @PostMapping
     public ResponseEntity<String> shortenUrl(@RequestBody String url, HttpServletRequest request) throws Exception {
         Response<UrlMapping> response = shortUrlCreatorProducerService.sendMessage(url);
-
-        if (response.getException() != null) {
-            throw response.getException();
-        }
+        throwExceptionIfResponseHasError(response);
 
         String baseUrl = request.getRequestURL()
                 .toString()
@@ -49,14 +48,22 @@ public class UrlShortenerController {
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(@PathVariable String shortCode) throws Exception {
         Response<UrlMapping> response = findUrlProducerService.sendMessage(shortCode);
-
-        if (response.getException() != null) {
-            throw response.getException();
-        }
-
+        throwExceptionIfResponseHasError(response);
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(response.getData().getOriginalUrl()))
                 .build();
+    }
+
+    private void throwExceptionIfResponseHasError(Response<UrlMapping> response) {
+        if (response.hasError()) {
+            ErrorInfo error = response.getErrorInfo();
+
+            if (UrlNotFoundException.class.getName().equals(error.getExceptionType())) {
+                throw new UrlNotFoundException(error.getMessage());
+            }
+
+            throw new RuntimeException(error.getMessage());
+        }
     }
 
 }

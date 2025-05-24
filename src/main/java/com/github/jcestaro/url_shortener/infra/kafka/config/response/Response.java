@@ -3,7 +3,7 @@ package com.github.jcestaro.url_shortener.infra.kafka.config.response;
 public class Response<T> {
 
     private T data;
-    private Exception exception;
+    private ErrorInfo errorInfo;
 
     public Response() {
     }
@@ -13,15 +13,21 @@ public class Response<T> {
     }
 
     public Response(Exception exception) {
-        this.exception = exception;
+        if (exception != null) {
+            this.errorInfo = new ErrorInfo(exception.getClass().getName(), exception.getMessage());
+        }
     }
 
     public T getData() {
         return data;
     }
 
-    public Exception getException() {
-        return exception;
+    public ErrorInfo getErrorInfo() {
+        return errorInfo;
+    }
+
+    public boolean hasError() {
+        return this.errorInfo != null;
     }
 
 }

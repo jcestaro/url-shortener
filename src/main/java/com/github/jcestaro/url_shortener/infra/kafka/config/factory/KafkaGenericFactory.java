@@ -1,11 +1,13 @@
 package com.github.jcestaro.url_shortener.infra.kafka.config.factory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jcestaro.url_shortener.infra.kafka.config.response.Response;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
@@ -24,12 +26,18 @@ public class KafkaGenericFactory {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    public <K, V> ProducerFactory<K, V> genericProducerFactory() {
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public KafkaGenericFactory(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    public <V> ProducerFactory<String, V> genericProducerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(props);
+        JsonSerializer<V> jsonSerializer = new JsonSerializer<>(this.objectMapper);
+        return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), jsonSerializer);
     }
 
     public <V> ConsumerFactory<String, V> genericConsumerFactory(TypeReference<V> valueClass, String consumerGroupId) {
@@ -37,9 +45,9 @@ public class KafkaGenericFactory {
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
-        JsonDeserializer<V> deserializer = new JsonDeserializer<>(valueClass);
+        JsonDeserializer<V> deserializer = new JsonDeserializer<>(valueClass, this.objectMapper, false);
+
         deserializer.setRemoveTypeHeaders(false);
         deserializer.addTrustedPackages("*");
         deserializer.setUseTypeMapperForKey(false);
