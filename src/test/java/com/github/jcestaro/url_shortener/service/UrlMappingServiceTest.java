@@ -19,8 +19,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UrlMappingServiceTest {
@@ -51,6 +50,19 @@ class UrlMappingServiceTest {
             assertEquals(originalUrl, saved.getOriginalUrl());
             assertNotNull(saved.getShortCode());
             assertEquals(6, saved.getShortCode().length());
+        }
+
+        @Test
+        @DisplayName("should use existing shortCode if available")
+        void shouldUseExistingShortCodeIfAvailable() {
+            String originalUrl = "https://www.google.com/";
+            UrlMapping existingUrlMapping = new UrlMapping();
+            when(repository.findByOriginalUrl(originalUrl)).thenReturn(Optional.of(existingUrlMapping));
+
+            Response<UrlMapping> urlMapping = service.createShortUrl(originalUrl);
+
+            verify(repository, never()).save(any());
+            assertEquals(urlMapping.getData(), existingUrlMapping);
         }
     }
 

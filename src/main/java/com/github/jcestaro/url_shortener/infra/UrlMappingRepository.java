@@ -10,4 +10,6 @@ public interface UrlMappingRepository extends MongoRepository<UrlMapping, UUID> 
 
     Optional<UrlMapping> findByShortCode(String shortCode);
 
+    Optional<UrlMapping> findByOriginalUrl(String originalUrl);
+
 }

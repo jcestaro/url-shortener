@@ -10,6 +10,7 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Random;
 
 
@@ -54,6 +55,12 @@ public class UrlMappingService {
     )
     public Response<UrlMapping> createShortUrl(String originalUrl) {
         try {
+            Optional<UrlMapping> possibleExistingMapping = repository.findByOriginalUrl(originalUrl);
+
+            if (possibleExistingMapping.isPresent()) {
+                return new Response<>(possibleExistingMapping.get());
+            }
+
             String shortCode = generateShortUrl();
             UrlMapping shortUrl = new UrlMapping(originalUrl, shortCode);
             return new Response<>(repository.save(shortUrl));
