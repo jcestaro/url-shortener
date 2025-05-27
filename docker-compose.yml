@@ -13,24 +13,26 @@ services:
       - mongodata_compose:/data/db
 
   kafka:
-    image: confluentinc/cp-kafka:7.3.0
+    image: confluentinc/cp-kafka:7.9.1.amd64
     container_name: my-kafka-kraft-compose
     ports:
       - "9092:9092"
     environment:
+      CLUSTER_ID: '659dab23-8ee0-4e47-8b20-84ff720ca117'
       KAFKA_PROCESS_ROLES: 'broker,controller'
       KAFKA_NODE_ID: '1'
-      KAFKA_BROKER_ID: '1'
       KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
       KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
       KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1'
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: '1'
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: '1'
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: '0'
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data/logs"
     volumes:
       - kafkadata_compose:/var/lib/kafka/data
 
