@@ -13,9 +13,13 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger LOGGER = Logger.getLogger(GlobalExceptionHandler.class.getName());
+    private static final String UNEXPECTED_SERVER_ERROR = "Unexpected server error";
 
     @ExceptionHandler(UrlNotFoundException.class)
     public ResponseEntity<Object> handleUrlNotFoundException(UrlNotFoundException ex) {
@@ -24,22 +28,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({ListenerExecutionFailedException.class, ExecutionException.class})
     public ResponseEntity<Object> handleListenerExecutionFailedException(Exception ex) {
-        Throwable cause = ex.getCause();
-        if (cause instanceof UrlNotFoundException) {
-            return handleUrlNotFoundException((UrlNotFoundException) cause);
-        }
-
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Kafka listener failed: " + ex.getMessage());
+        LOGGER.warning("Kafka listener failed: " + ex.getMessage());
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, UNEXPECTED_SERVER_ERROR);
     }
 
     @ExceptionHandler({KafkaException.class, KafkaReplyTimeoutException.class})
     public ResponseEntity<Object> handleKafkaExceptions(Exception ex) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error communicating with Kafka: " + ex.getMessage());
+        LOGGER.warning("Error communicating with Kafka: " + ex.getMessage());
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, UNEXPECTED_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error: " + ex.getMessage());
+        LOGGER.warning(UNEXPECTED_SERVER_ERROR + ": " + ex.getMessage());
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, UNEXPECTED_SERVER_ERROR);
     }
 
     private ResponseEntity<Object> buildResponse(HttpStatus status, String message) {

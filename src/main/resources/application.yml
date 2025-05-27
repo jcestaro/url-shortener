@@ -38,6 +38,10 @@ kafka:
       shorturlcreator:
         request: url.shortener.create.url.request
         reply: url.shortener.create.url.reply
+        partitions: 1
+        replicas: 1
       findurl:
         request: url.shortener.find.url.request
         reply: url.shortener.find.url.reply
+        partitions: 1
+        replicas: 1
