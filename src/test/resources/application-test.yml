@@ -1,12 +1,43 @@
 spring:
+  application:
+    name: url-shortener-test
+
   data:
     mongodb:
-      uri: mongodb://localhost:27017/test
-  main:
-    allow-bean-definition-overriding: true
-  jackson:
-    serialization:
-      indent_output: true
-  test:
-    database:
-      replace: none
+      auto-index-creation: true
+
+  kafka:
+    consumer:
+      group-id: url-shortener-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: "nonFinal"
+
+kafka:
+  topic:
+    requestreply:
+      shorturlcreator:
+        request: url.shortener.create.url.request
+        reply: url.shortener.create.url.reply
+        partitions: 1
+        replicas: 1
+      findurl:
+        request: url.shortener.find.url.request
+        reply: url.shortener.find.url.reply
+        partitions: 1
+        replicas: 1
+
+logging:
+  level:
+    org.springframework.kafka: DEBUG
+    org.apache.kafka: WARN
+    org.mongodb.driver: WARN
+    com.github.jcestaro.url_shortener: DEBUG
