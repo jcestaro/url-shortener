@@ -12,13 +12,14 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.requestreply.ReplyingKafkaTemplate;
 
 @Configuration
 public class KafkaConfig {
 
-    private static final String REPLY = "-reply";
+    private static final String REPLY_SUFFIX = "-reply";
 
     @Value("${kafka.topic.requestreply.shorturlcreator.reply}")
     private String replyShortUrlCreatorTopic;
@@ -27,13 +28,15 @@ public class KafkaConfig {
     private String replyFindUrlTopic;
 
     @Value("${spring.kafka.consumer.group-id}")
-    private String groupId;
+    private String defaultGroupId;
 
     private final KafkaGenericFactory kafkaGenericFactory;
+    private final CommonErrorHandler dlqCommonErrorHandler;
 
     @Autowired
-    public KafkaConfig(KafkaGenericFactory kafkaGenericFactory) {
+    public KafkaConfig(KafkaGenericFactory kafkaGenericFactory, CommonErrorHandler dlqCommonErrorHandler) {
         this.kafkaGenericFactory = kafkaGenericFactory;
+        this.dlqCommonErrorHandler = dlqCommonErrorHandler;
     }
 
     @Bean
@@ -49,13 +52,13 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, String> consumerFactoryString() {
         return kafkaGenericFactory.genericConsumerFactory(new TypeReference<>() {
-        }, groupId);
+        }, defaultGroupId);
     }
 
     @Bean
     public ConsumerFactory<String, Response<UrlMapping>> consumerFactoryUrlMappingResponse() {
         return kafkaGenericFactory.genericConsumerFactory(new TypeReference<>() {
-        }, groupId + REPLY);
+        }, defaultGroupId + REPLY_SUFFIX);
     }
 
     @Bean
@@ -70,13 +73,17 @@ public class KafkaConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactoryString(
-            ConsumerFactory<String, String> plainStringConsumerFactory,
+            ConsumerFactory<String, String> consumerFactoryString,
             KafkaTemplate<String, Response<UrlMapping>> replyKafkaTemplateForResponseUrlMapping
     ) {
-        return kafkaGenericFactory.genericKafkaListenerFactory(
-                plainStringConsumerFactory,
-                replyKafkaTemplateForResponseUrlMapping
-        );
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
+                kafkaGenericFactory.genericKafkaListenerFactory(
+                        consumerFactoryString,
+                        replyKafkaTemplateForResponseUrlMapping
+                );
+
+        factory.setCommonErrorHandler(dlqCommonErrorHandler);
+        return factory;
     }
 
     @Bean
@@ -84,7 +91,7 @@ public class KafkaConfig {
         return kafkaGenericFactory.genericRepliesContainer(
                 consumerFactoryUrlMappingResponse(),
                 replyShortUrlCreatorTopic,
-                groupId + REPLY
+                defaultGroupId + REPLY_SUFFIX
         );
     }
 
@@ -93,7 +100,7 @@ public class KafkaConfig {
         return kafkaGenericFactory.genericRepliesContainer(
                 consumerFactoryUrlMappingResponse(),
                 replyFindUrlTopic,
-                groupId + REPLY
+                defaultGroupId + REPLY_SUFFIX
         );
     }
 
@@ -112,4 +119,5 @@ public class KafkaConfig {
                 repliesContainerUrlMappingFinder()
         );
     }
+
 }

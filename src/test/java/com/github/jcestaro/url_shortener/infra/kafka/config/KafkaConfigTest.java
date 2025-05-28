@@ -29,7 +29,7 @@ class KafkaConfigTest {
     private static final String SHORT_URL_REPLY = "url-shortener-short-url-reply";
     private static final String FIND_URL_REPLY = "url-shortener-find-url-reply";
     private static final String TEST_GROUP = "test-group";
-    private static final String TEST_GROUP_REPLY = "test-group-reply"; // TEST_GROUP + "-reply"
+    private static final String TEST_GROUP_REPLY = "test-group-reply";
 
     @InjectMocks
     private KafkaConfig kafkaConfig;
